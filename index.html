@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Rozhledny Český ráj</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+    body { margin: 0; }
+    #map { height: 100vh; }
+
+    .popup {
+      text-align: center;
+    }
+
+    .popup img {
+      width: 220px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-top: 8px;
+    }
+
+    .gallery-buttons {
+      margin-top: 5px;
+    }
+
+    button {
+      margin: 2px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+    #fullscreen {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.9);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#fullscreen img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 10px;
+}
+
+#closeBtn {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 30px;
+  color: white;
+  cursor: pointer;
+}
+
+.popup img {
+  cursor: pointer;
+}
+  </style>
+</head>
+<body>
+ 
+<div id="map"></div>
+<!-- FULLSCREEN OVERLAY -->
+<div id="fullscreen">
+  <span id="closeBtn">✖</span>
+  <button id="prevBtn">←</button>
+  <img id="fullscreen-img">
+  <button id="nextBtn">→</button>
+  <div id="fullscreen-title"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  const map = L.map('map').setView([50.55, 15.2], 11);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap &copy; CartoDB'
+}).addTo(map);
+
+  // 🗼 ikonka
+  const towerIcon = L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30]
+  });
+
+  // 🟢 polygon (10+ bodů)
+
+ 
+
+
+  // 🔴 DATA (více obrázků!)
+  const rozhledny = [
+    {
+      name: "Čížovka",
+      lat: 50.4823875, 
+      lng: 15.0857889,
+      desc: "Rozhledna ve tvaru jehlanu u Kněžmostu byla otevřena roku 2017. Tato 39 metrů vysoká ocelová stavba s dřevěnými prvky nabízí pět plošin a unikátní prosklené balkony. Z nejvyššího ochozu ve 35 metrech, kde lze zazvonit na zvon, je vidět Bezděz i Sněžka. Stavba získala prestižní titul Rozhledna roku.",
+      images: ["cizovka1.jpg", "cizovka2.jpg", "cizovka3.jpg"]
+    },
+    {
+      name: "Dubecko",
+      lat: 50.5836072,
+      lng: 15.2225628,
+      desc: "Železná telekomunikační věž u Mírové pod Kozákovem byla vztyčena roku 2002. Na žádost obce byla tato 50 metrů vysoká konstrukce doplněna o vyhlídkový ochoz ve výšce 33 metrů. Nabízí široký rozhled na Trosky, Bezděz i Ještěd. Vstup je možný celoročně po zapůjčení klíče u správce v blízké osadě.",
+      images: ["dubecko1.jpg", "dubecko2.jpg", "dubecko3.jpg"]
+    },
+    {
+    name: "Hamštejn",
+    lat: 50.6208325, lng: 15.2409017,
+    desc: "Rozhledna Hamštejn Nejmladší rozhledna regionu u obce Koberovy byla slavnostně otevřena v listopadu 2023. Konstrukce z oceli a modřínového dřeva připomíná raketu a dosahuje celkové výšky 25 metrů. Z vyhlídky ve 22 metrech nabízí kruhový výhled na Krkonoše i Český ráj. Při slavnostních příležitostech bývá věž v noci nasvícená. Přístup je celoročně zdarma.",
+    images: ["hamstejn1.jpg", "hamstejn2.jpg", "hamstejn3.jpg"]
+    },
+    {
+        name: "Kopanina",
+        lat: 50.6597647, lng: 15.1646947,
+        desc: "Cihlová rozhledna u Frýdštejna byla vybudována roku 1894 Klubem českých turistů jako symbol českého národního sebevědomí. Původně měřila 18 metrů, ale v roce 1936 byla zvýšena na současných 21 metrů a zastřešena prosklenou nástavbou. Z ochozu v 657 m n. m. nabízí kruhový rozhled od Jizerských hor až po Krkonoše.",
+        images: ["kopanina1.jpg", "kopanina2.jpg", "kopanina3.jpg"]
+    },
+    {
+        name: "Kozákov",
+        lat: 50.5943694, lng:15.2631408,
+        desc: "Na nejvyšší hoře Českého ráje stojí od roku 1995 kovová telekomunikační věž vysoká 48 metrů. Pro veřejnost je přístupná vyhlídková plošina ve výšce 24 metrů, nabízející dokonalý kruhový rozhled na Krkonoše, Jizerské hory i Máchův kraj. Přímo u paty věže se nachází turistům dobře známá Riegrova chata z roku 1928.",
+        images: ["kozakov1.jpg", "kozakov2.jpg", "kozakov3.jpg"]
+    },
+    {
+        name: "Kozinec",
+        lat: 50.5191994, lng: 15.5585883,
+        desc: "Tato 55 metrů vysoká kovová věž u Nové Paky slouží od roku 2004 jako vysílač. Pro turisty byla zpřístupněna roku 2009 díky iniciativě Spolku přátel rozhleden. Vyhlídkový ochoz ve 33 metrech nabízí pohled na Krkonoše, hrad Pecka i Zvičinu. Otevřena je v sezóně v sobotu a nabízí turistické suvenýry.",
+        images: ["kozinec1.jpg", "kozinec2.jpg", "kozinec3.jpg"]
+    },
+    {
+        name: "Milohlídka",
+        lat: 50.4448194, lng: 15.3603242,
+        desc: "Milohlídka v Jičíně je nejstarší rozhlednou Českého ráje, postavenou roku 1843 hejtmanem Hansgirgem pro zaměstnání chudých. Tato 8 metrů vysoká kamenná věž v novogotickém stylu hradní hlásky nabízí dnes již omezený výhled na Jičínsko. Stojí na čedičovém vrchu Čeřovka a je celoročně volně přístupná jako historický symbol regionu.",
+        images: ["milohlidka1.jpg", "milohlidka2.jpg", "milohlidka3.jpg"]
+    },
+    {
+        name: "Tichánkova rozhledna",
+        lat: 50.5091892, lng: 15.3684569,
+        desc: "Tichánkova rozhledna na vrchu Tábor byla postavena roku 1911 na místě původní dřevěné věže. Tato 35 metrů vysoká cihlová stavba s vyhlídkovou plošinou ve 26 metrech patří k nejkrásnějším v Čechách. Nabízí úchvatné panorama Krkonoš i Českého ráje a je vybavena moderním turniketem pro celoroční přístup turistů.",
+        images: ["tichankova_rozhledna1.jpg", "tichankova_rozhledna2.jpg", "tichankova_rozhledna3.jpg"]
+    },
+    {
+        name: "Vrchovina u Sychrova",
+        lat: 50.6454817, lng: 15.0752419,
+        desc: " Dřevěná rozhledna z modřínu byla postavena roku 2015 jako součást soukromého relaxačního areálu u Sychrova. Je vysoká pouze 6 metrů, aby byla bezpečně přístupná dětem i seniorům. Vzhledem připomíná myslivecký posed a z jejího ochozu lze sledovat Ještěd, Trosky nebo letadla na blízkém letišti v Hodkovicích.",
+        images: ["vrchovina_u_sychrova1.jpg", "vrchovina_u_sychrova2.jpg", "vrchovina_u_sychrova3.jpg"]
+    }
+    // přidej další stejně
+  ];
+
+  // funkce galerie
+  function createPopupContent(r, index) {
+    return `
+      <div class="popup">
+        <b>${r.name}</b><br>
+        <p>${r.desc}</p>
+
+        <img src="${r.images[index]}" 
+            id="img-${r.name}" 
+            onclick="openFullscreenGallery('${r.name}', ${index})">
+        <div class="gallery-buttons">
+          <button onclick="prevImage('${r.name}')">←</button>
+          <button onclick="nextImage('${r.name}')">→</button>
+        </div>
+      </div>
+    `;
+  }
+
+  const imageIndexes = {};
+
+  rozhledny.forEach(r => {
+    imageIndexes[r.name] = 0;
+
+    const marker = L.marker([r.lat, r.lng], { icon: towerIcon }).addTo(map);
+
+    marker.bindPopup(createPopupContent(r, 0));
+
+    marker.on("popupopen", () => {
+      marker.setPopupContent(createPopupContent(r, imageIndexes[r.name]));
+    });
+  });
+
+  function nextImage(name) {
+    const r = rozhledny.find(x => x.name === name);
+    imageIndexes[name] = (imageIndexes[name] + 1) % r.images.length;
+    updateImage(name);
+  }
+
+  function prevImage(name) {
+    const r = rozhledny.find(x => x.name === name);
+    imageIndexes[name] =
+      (imageIndexes[name] - 1 + r.images.length) % r.images.length;
+    updateImage(name);
+  }
+
+  function updateImage(name) {
+    const r = rozhledny.find(x => x.name === name);
+    const img = document.getElementById("img-" + name);
+    if (img) {
+      img.src = r.images[imageIndexes[name]];
+    }
+  }
+function openFullscreen(src) {
+  const fs = document.getElementById("fullscreen");
+  const img = document.getElementById("fullscreen-img");
+
+  img.src = src;
+  fs.style.display = "flex";
+}
+
+function closeFullscreen() {
+  document.getElementById("fullscreen").style.display = "none";
+}
+// FULLSCREEN GALERIE
+let currentGallery = [];
+let currentIndex = 0;
+let currentName = "";
+
+function openFullscreenGallery(name, index) {
+  const r = rozhledny.find(x => x.name === name);
+
+  currentGallery = r.images;
+  currentIndex = index;
+  currentName = name;
+
+  updateFullscreen();
+
+  document.getElementById("fullscreen").style.display = "flex";
+}
+
+function updateFullscreen() {
+  document.getElementById("fullscreen-img").src = currentGallery[currentIndex];
+  document.getElementById("fullscreen-title").innerText = currentName;
+}
+
+function nextFullscreen() {
+  currentIndex = (currentIndex + 1) % currentGallery.length;
+  updateFullscreen();
+}
+
+function prevFullscreen() {
+  currentIndex = (currentIndex - 1 + currentGallery.length) % currentGallery.length;
+  updateFullscreen();
+}
+
+function closeFullscreen() {
+  document.getElementById("fullscreen").style.display = "none";
+}
+
+// tlačítka
+document.getElementById("nextBtn").onclick = nextFullscreen;
+document.getElementById("prevBtn").onclick = prevFullscreen;
+document.getElementById("closeBtn").onclick = closeFullscreen;
+</script>
+
+</body>
+</html>
